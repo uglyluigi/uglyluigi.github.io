@@ -1,54 +1,88 @@
 <script setup>
-	import * as THREE from 'three';
-	import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-	import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-	const scene = new THREE.Scene();
-	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-	const renderer = new THREE.WebGLRenderer({alpha: true});
+	import { ref } from 'vue'
+	let nonogram_data = [[true, false], [false, true]];
+	let solve_matrix = compute_solve_matrix(nonogram_data);
+	let placeholder_matrix = ref(build_placeholder_matrix(nonogram_data));
 
-	renderer.setSize(window.innerWidth, window.innerHeight);
+	function build_placeholder_matrix(nonogram_matrix) {
+		let placeholder = nonogram_matrix.slice();
 
-	const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+		for (let row of placeholder) {
+			row.fill(false);
+		}
 
-	const loader = new FontLoader();
-
-	loader.load('fonts/Ebrima_Bold.json', function (font) {
-			
-		const geometry = new TextGeometry('Hello three.js!', {
-			font: font,
-			size: 10,
-			depth: 5,
-			curveSegments: 12,
-			bevelEnabled: true,
-			bevelThickness: 10,
-			bevelSize: 1,
-			bevelOffset: 0,
-			bevelSegments: 5
-		});
-
-		var textMesh = new THREE.Mesh(geometry, material);
-		textMesh.position.x = 0;
-		textMesh.position.y = 0;
-		scene.add(textMesh);
-	});
-
-	camera.position.z = 500;
-
-	renderer.setAnimationLoop(() => renderer.render(scene, camera));
-
-	function generateNonogramMesh(width, height) {
-
+		return placeholder;
 	}
 
-	function onMounted() {
-        document.body.appendChild(renderer.domElement);
+	function is_solved(nonogram_matrix, player_board_matrix) {
+		if (nonogram_matrix.length != player_board_matrix.length) {
+			console.log("Can't determine solve.");
+		}
+
+		for (let i = 0; i < nonogram_matrix.length; i++) {
+			if (nonogram_matrix[i] != player_board_matrix[i]) return false;
+		}
+
+		return true;
 	}
+
+	function compute_solve_matrix(nonogram_matrix) {
+		let matrix = [];
+		for (let row of nonogram_matrix) {
+			let count = 0;
+			let matrix_row = [];
+
+			for (let filled of row) {
+				if (filled) count++;
+				else if (!filled && count > 0) {
+					matrix_row.push(count);
+					count = 0;
+				}
+			}
+
+			if (row.reduce((partialSum, x) => partialSum + x, 0) === 0) {
+                matrix_row.push(0);
+			}
+
+			matrix.push(matrix_row);
+		}
+
+		return matrix;
+	}
+
 </script>
 
 <template>
-	
+	<div class="board flex flex-col">
+		<div class="flex flex-row board-row" v-for="(board_row, i) in placeholder_matrix">
+			<div class="grid-cell"
+				 v-for="(value, j) in board_row"
+				 :class="{ selected: placeholder_matrix[i][j], unselected: !placeholder_matrix[i][j] }"
+				 :key="placeholder_matrix"
+				 @click="placeholder_matrix[i][j] = !placeholder_matrix[i][j]">
+			</div>
+		</div>
+	</div>
 </template>
 
 <style scoped>
-	
+	.board {
+	}
+
+	.board-row {
+
+	}
+
+	.grid-cell {
+		height: 50px;
+		width: 50px;
+	}
+
+	.unselected {
+		background-color: white;
+	}
+
+	.selected {
+		background-color: red;
+	}
 </style>
