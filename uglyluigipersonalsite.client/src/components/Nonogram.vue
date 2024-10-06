@@ -1,66 +1,62 @@
 <script setup>
-	import { ref } from 'vue'
-	let nonogram_data = [[true, false], [false, true]];
-	let solve_matrix = compute_solve_matrix(nonogram_data);
-	let placeholder_matrix = ref(build_placeholder_matrix(nonogram_data));
-
-	function build_placeholder_matrix(nonogram_matrix) {
-		let placeholder = nonogram_matrix.slice();
-
-		for (let row of placeholder) {
-			row.fill(false);
-		}
-
-		return placeholder;
-	}
-
-	function is_solved(nonogram_matrix, player_board_matrix) {
-		if (nonogram_matrix.length != player_board_matrix.length) {
-			console.log("Can't determine solve.");
-		}
-
-		for (let i = 0; i < nonogram_matrix.length; i++) {
-			if (nonogram_matrix[i] != player_board_matrix[i]) return false;
-		}
-
-		return true;
-	}
-
-	function compute_solve_matrix(nonogram_matrix) {
+	import { ref, computed } from 'vue'
+    const nonogram_data = ref([[true, false, true, true], [false, true, false, false], [true, true, true, true]]);
+	const placeholder_matrix = ref(buildPlaceholder());
+    const solve_matrix = computed(() => {
 		let matrix = [];
-		for (let row of nonogram_matrix) {
-			let count = 0;
-			let matrix_row = [];
 
-			for (let filled of row) {
-				if (filled) count++;
-				else if (!filled && count > 0) {
-					matrix_row.push(count);
-					count = 0;
-				}
-			}
+        for (let row of nonogram_data.value) {
+            let count = 0;
+            let matrix_row = [];
 
-			if (row.reduce((partialSum, x) => partialSum + x, 0) === 0) {
+            for (let i = 0; i < row.length; i++) {
+                if (row[i]) count++;
+                if ((!row[i] || i == row.length - 1) && count > 0) {
+                    matrix_row.push(count);
+                    count = 0;
+                }
+            }
+
+            // the only time we should push 0 into the solve matrix
+            // is if the row truly has zero blocks.
+            if (row.reduce((partialSum, x) => partialSum + x, 0) === 0) {
                 matrix_row.push(0);
-			}
+            }
 
-			matrix.push(matrix_row);
-		}
+            matrix.push(matrix_row);
+        }
 
 		return matrix;
-	}
+    });
+	const isSolved = computed(() => { 
+		return JSON.stringify(nonogram_data.value) === JSON.stringify(placeholder_matrix.value);
+	});
 
+	function buildPlaceholder() {
+		let placeholder = new Array(nonogram_data.value.length);
+		for (let i = 0; i < placeholder.length; i++) {
+			placeholder[i] = new Array(nonogram_data.value[i].length);
+			placeholder[i].fill(false);
+		}
+		return placeholder;
+	}
 </script>
 
 <template>
 	<div class="board flex flex-col">
-		<div class="flex flex-row board-row" v-for="(board_row, i) in placeholder_matrix">
+		<div class="flex flex-row self-end board-row" v-for="(board_row, i) in placeholder_matrix">
+			<div class="flex flex-row items-center px-1" v-for="solve_values in solve_matrix[i]">
+				{{ solve_values }}
+			</div>
 			<div class="grid-cell"
 				 v-for="(value, j) in board_row"
 				 :class="{ selected: placeholder_matrix[i][j], unselected: !placeholder_matrix[i][j] }"
-				 :key="placeholder_matrix"
-				 @click="placeholder_matrix[i][j] = !placeholder_matrix[i][j]">
+				 :key="placeholder_matrix[i][j]"
+				 @click.left="placeholder_matrix[i][j] = !placeholder_matrix[i][j]">
 			</div>
+		</div>
+		<div :key="placeholder_matrix" v-if="isSolved">
+			Solved!!!! Wow!!!
 		</div>
 	</div>
 </template>
@@ -70,7 +66,6 @@
 	}
 
 	.board-row {
-
 	}
 
 	.grid-cell {
@@ -84,5 +79,9 @@
 
 	.selected {
 		background-color: red;
+	}
+
+	.excluded {
+
 	}
 </style>
