@@ -6,15 +6,16 @@
 
         <div class="px-3 flex flex-col">
             <RouterLink to="/blog">blog posts</RouterLink>
-                <a href="https://github.com/uglyluigi">
-                    <div class="flex flex-row">
-                        <img class="github-brand" src="../assets/brand-github.svg" />
-                        <div class="pl-1">github</div>
-                    </div>
-                </a>
+            <a href="https://github.com/uglyluigi">
+                <div class="flex flex-row">
+                    <img class="github-brand" src="../assets/brand-github.svg" />
+                    <div class="pl-1">github</div>
+                </div>
+            </a>
             <RouterLink to="/">about me</RouterLink>
             <RouterLink class="rainbow rainbow_text_animated" to="/nonogram">nonogram</RouterLink>
             <RouterLink to="/contact">contact</RouterLink>
+            <RouterLink to="/cv">cv</RouterLink>
         </div>
     </div>
 </template>
